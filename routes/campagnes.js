@@ -1,9 +1,9 @@
-const express = require('express')
+﻿const express = require('express')
 const router = express.Router()
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
-const auth = require('../middleware/auth')
-const { requirePermission } = require('../middleware/auth')
+const authMiddleware = require('../middleware/auth')
+
 router.get('/', async (req, res) => {
   try {
     const user = req.user
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.post('/', authMiddleware, requirePermission('GERER_CAMPAGNES'), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { title, type, clientId, dateScheduled } = req.body
     const campagne = await prisma.campagne.create({
@@ -43,12 +43,12 @@ router.post('/', authMiddleware, requirePermission('GERER_CAMPAGNES'), async (re
   }
 })
 
-router.put('/:id', authMiddleware, requirePermission('GERER_CAMPAGNES'), async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
-    const { title, status } = req.body
+    const { title, status, dateScheduled } = req.body
     const campagne = await prisma.campagne.update({
       where: { id: parseInt(req.params.id) },
-      data: { title, status }
+      data: { title, status, dateScheduled: dateScheduled ? new Date(dateScheduled) : undefined }
     })
     res.json(campagne)
   } catch (err) {
@@ -56,7 +56,7 @@ router.put('/:id', authMiddleware, requirePermission('GERER_CAMPAGNES'), async (
   }
 })
 
-router.delete('/:id', authMiddleware, requirePermission('GERER_CAMPAGNES'), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     await prisma.campagne.delete({ where: { id: parseInt(req.params.id) } })
     res.json({ message: 'Campagne supprimee' })
