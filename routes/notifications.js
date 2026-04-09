@@ -1,8 +1,7 @@
-const express  = require('express')
+﻿const express  = require('express')
 const webpush  = require('web-push')
 const { PrismaClient } = require('@prisma/client')
-const { authenticate } = require('../middleware/auth')
-
+const authenticate = require('../middleware/auth')
 const router = express.Router()
 const prisma = new PrismaClient()
 
@@ -12,7 +11,6 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 )
 
-// Sauvegarder abonnement
 router.post('/subscribe', authenticate, async (req, res) => {
   try {
     const { subscription } = req.body
@@ -20,7 +18,6 @@ router.post('/subscribe', authenticate, async (req, res) => {
       where: { endpoint: subscription.endpoint }
     })
     if (existing) return res.json({ message: 'Deja abonne' })
-
     await prisma.pushSubscription.create({
       data: {
         endpoint: subscription.endpoint,
@@ -35,16 +32,13 @@ router.post('/subscribe', authenticate, async (req, res) => {
   }
 })
 
-// Envoyer notification a tous ou un user
 router.post('/send', authenticate, async (req, res) => {
   try {
     const { title, body, url, userId } = req.body
     const where = userId ? { userId: parseInt(userId) } : {}
     const subs  = await prisma.pushSubscription.findMany({ where })
-
     const payload = JSON.stringify({ title, body, url: url || '/' })
     const results = []
-
     for (const sub of subs) {
       try {
         await webpush.sendNotification(
@@ -56,14 +50,12 @@ router.post('/send', authenticate, async (req, res) => {
         results.push({ id: sub.id, status: 'failed', error: err.message })
       }
     }
-
     res.json({ sent: results.filter(r => r.status === 'sent').length, results })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// Clé publique VAPID pour le frontend
 router.get('/vapid-key', (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY })
 })
