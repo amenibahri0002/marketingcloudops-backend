@@ -4,10 +4,16 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
-
+const {
+  loginLimiter,
+  registerLimiter,
+  validateLogin,
+  validateRegister,
+  checkValidation
+} = require('../middleware/security')
 const JWT_SECRET = process.env.JWT_SECRET || 'secret123'
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, validateRegister, checkValidation, async (req, res) => {
   try {
     const { name, email, password } = req.body
     const existing = await prisma.user.findUnique({ where: { email } })
@@ -23,7 +29,7 @@ router.post('/register', async (req, res) => {
   }
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, validateLogin, checkValidation, async (req, res) => {
   try {
     const { email, password } = req.body
     const user = await prisma.user.findUnique({ where: { email } })

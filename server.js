@@ -4,13 +4,18 @@ const { PrismaClient } = require('@prisma/client')
 const client = require('prom-client')
 const  authenticate  = require('./middleware/auth')
 const axios = require('axios')
-
+const {
+  helmetMiddleware,
+  globalLimiter,
+} = require('./middleware/security')
 const app = express()
 const prisma = new PrismaClient()
 
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(helmetMiddleware)
+app.use(globalLimiter)
 
 const authRoutes = require('./routes/auth')
 app.use('/api/auth', authRoutes)
