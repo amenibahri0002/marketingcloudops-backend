@@ -20,7 +20,7 @@ router.post('/register', registerLimiter, validateRegister, checkValidation, asy
     if (existing) return res.status(400).json({ message: 'Email déjà utilisé' })
     const hashed = await bcrypt.hash(password, 10)
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, role: 'USER' }
+      data: { name, email, password: hashed, role: 'CLIENT' }
     })
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET)
     res.json({ message: 'Compte cree avec succes', token, user: { id: user.id, name: user.name, email: user.email } })
